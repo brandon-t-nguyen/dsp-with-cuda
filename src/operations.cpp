@@ -19,19 +19,24 @@ std::vector<double> * Operations::convolve( const std::vector<double> * x,
 std::vector<double> * Operations::convolve_cpu( const std::vector<double> * x,
                                                 const std::vector<double> * h )
 {
-    int N = x->size() + h->size() - 1;  // total length of the convolution
-    int M = h->size();  // let x stay in place
-    std::vector<double> * y = new std::vector<double>(N);
+    int convLen  = x->size() + h->size() - 1;  // total length of the convolution
+    int hL = h->size();  // let x stay in place
+    int xL = x->size();  // let x stay in place
+    std::vector<double> * y = new std::vector<double>(convLen);
 
-    // point by point convolution, mathematical definition
-    for(int n = 0; n < N; ++n)
+    for(int n = 0; n < convLen; ++n)
     {
-        double sum = 0.0;
-        for(int m = 0; m < M; ++m)
+        double sum = 0;
+        for(int hI = 0, xI = n; hI < hL; ++hI, --xI)
         {
-            int xIndex = n - m;
-            double xVal = xIndex < 0? 0.0 : (*x)[xIndex];
-            sum += (*h)[m] * xVal;
+            double hVal = (*h)[hI];
+            double xVal = 0.0;
+            if( 0 <= xI && xI < xL )
+            {
+                xVal = (*x)[xI];
+            }
+            sum += xVal * hVal;
+
         }
         (*y)[n] = sum;
     }

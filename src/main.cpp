@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
     std::cout << "Hello world!" << std::endl;
 
     double x_raw[] = {1, 2, 3, 4, 5};
-    double h_raw[] = {0, 1, 2, 1, 0};
+    double h_raw[] = {0, 1, 2, 3, 1};
 
     std::vector<double> x (x_raw, x_raw + sizeof(x_raw)/sizeof(x_raw[0]));
     std::vector<double> h (h_raw, h_raw + sizeof(h_raw)/sizeof(h_raw[0]));
