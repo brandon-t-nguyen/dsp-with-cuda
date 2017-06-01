@@ -1,16 +1,19 @@
 CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
-SOURCES = $(wildcard src/*.c) $(wildcard src/*.cu)
+SOURCES = $(wildcard src/*.c) 
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
+
 OBJDIR = obj
-CUDAOBJDIR = $(OBJDIR)/cuda
 OBJECTS = $(SOURCES:.c=.o) 
-CUDA_OBJECTS = $(SOURCES:.cu=.o)
+
+CUDA_SOURCES = $(wildcard src/cuda/*.cu)
+CUDA_OBJDIR = $(OBJDIR)/cuda
+CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
 CUDA_BLOB = cuda.o
 
-LIBS = -lcuda -lcudart 
+LIBS = -lcuda
 
 
 GTEST_DIR = tests
@@ -22,16 +25,24 @@ GTEST_SRC = $(GTEST_DIR)/*.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $(OBJDIR)/$(@F)
 
 .cu.o:
-	mkdir -p $(CUDAOBJDIR)
-	nvcc -c $< -o $(CUDAOBJDIR)/$(@F)
+	mkdir -p $(CUDA_OBJDIR)
+	nvcc -c $< -o $(CUDA_OBJDIR)/$(@F)
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
-	nvcc -dlink $(addprefix $(CUDAOBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDAOBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDAOBJDIR)$(CUDA_BLOB)
+ifeq ($(CUDA_OBJECTS), )
+	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
+else
+	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
+	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB)
+endif
 
 $(GTEST_EXEC): $(OBJECTS) $(CUDA_OBJECTS)
-	nvcc -dlink $(addprefix $(CUDAOBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDAOBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDAOBJDIR)$(CUDA_BLOB) $(GTEST_SRC)
+ifeq ($(CUDA_OBJECTS), )
+	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
+else
+	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
+	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB) $(GTEST_SRC)
+endif
 
 all: $(EXECUTABLE)
 	@echo "Program built"
