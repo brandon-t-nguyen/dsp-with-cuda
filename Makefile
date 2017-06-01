@@ -1,7 +1,7 @@
 CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
-SOURCES = $(wildcard src/*.c) $(wildcard src/*.cpp) 
+SOURCES = $(wildcard src/dsp/*.cpp) $(wildcard src/*.cpp) 
 EXECUTABLE_DIR = bin
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
