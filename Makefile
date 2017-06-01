@@ -1,12 +1,12 @@
 CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
-SOURCES = $(wildcard src/*.c) 
+SOURCES = $(wildcard src/*.c) $(wildcard src/*.cpp) 
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
 
 OBJDIR = obj
-OBJECTS = $(SOURCES:.c=.o) 
+OBJECTS = $(SOURCES:.cpp=.o)
 
 CUDA_SOURCES = $(wildcard src/cuda/*.cu)
 CUDA_OBJDIR = $(OBJDIR)/cuda
@@ -20,7 +20,7 @@ GTEST_DIR = tests
 GTEST_EXEC = cufft_gtest
 GTEST_SRC = $(GTEST_DIR)/*.cpp
 
-.c.o:
+.cpp.o:
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $(OBJDIR)/$(@F)
 
@@ -30,6 +30,7 @@ GTEST_SRC = $(GTEST_DIR)/*.cpp
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
+	echo $(OBJECTS)
 	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
 else
 	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
