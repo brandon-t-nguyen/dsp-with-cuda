@@ -2,6 +2,7 @@ CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
 SOURCES = $(wildcard src/*.c) $(wildcard src/*.cpp) 
+EXECUTABLE_DIR = bin
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
 
@@ -29,20 +30,21 @@ GTEST_SRC = $(GTEST_DIR)/*.cpp
 	nvcc -c $< -o $(CUDA_OBJDIR)/$(@F)
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
+	mkdir -p $(EXECUTABLE_DIR)
 ifeq ($(CUDA_OBJECTS), )
 	echo $(OBJECTS)
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
+	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
 else
 	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB)
+	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB)
 endif
 
 $(GTEST_EXEC): $(OBJECTS) $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
+	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
 else
 	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB) $(GTEST_SRC)
+	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB) $(GTEST_SRC)
 endif
 
 all: $(EXECUTABLE)
@@ -54,13 +56,13 @@ gtest: $(GTEST_EXEC)
 
 clean:
 	rm -r $(OBJDIR)
-	rm $(EXECUTABLE)
+	rm -r $(EXECUTABLE_DIR)
 
 test: $(EXECUTABLE)
-	./$(EXECUTABLE)
+	$(EXECUTABLE_DIR)/$(EXECUTABLE)
 
 mem: $(EXECUTABLE)
-	valgrind --leak-check=yes ./$(EXECUTABLE)
+	valgrind --leak-check=yes $(EXECUTABLE_DIR)/$(EXECUTABLE)
 
 debug: $(EXECUTABLE)
-	gdb ./$(EXECUTABLE)
+	gdb $(EXECUTABLE_DIR)/$(EXECUTABLE)
