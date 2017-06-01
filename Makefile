@@ -14,37 +14,37 @@ CUDA_OBJDIR = $(OBJDIR)/cuda
 CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
 CUDA_BLOB = cuda.o
 
-LIBS = -lcuda
+LIBS = -L/opt/cuda/lib64/ -lcudart -lcuda 
 
 
 GTEST_DIR = tests
 GTEST_EXEC = cufft_gtest
 GTEST_SRC = $(GTEST_DIR)/*.cpp
 
-.cpp.o:
+#.cpp.o:
+%.o:%.cpp
 	mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $(OBJDIR)/$(@F)
 
-.cu.o:
+#.cu.o:
+%.o:%.cu
 	mkdir -p $(CUDA_OBJDIR)
-	nvcc -c $< -o $(CUDA_OBJDIR)/$(@F)
+	nvcc -c $(INCLUDE) $< -o $(CUDA_OBJDIR)/$(@F)
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
 	mkdir -p $(EXECUTABLE_DIR)
+	echo $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
-	echo $(OBJECTS)
 	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
 else
-	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB)
+	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS)))
 endif
 
 $(GTEST_EXEC): $(OBJECTS) $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
 	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
 else
-	nvcc -dlink $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) -o $(CUDA_OBJDIR)/$(CUDA_BLOB)
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(CUDA_OBJDIR)/$(CUDA_BLOB) $(GTEST_SRC)
+	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) $(GTEST_SRC)
 endif
 
 all: $(EXECUTABLE)
