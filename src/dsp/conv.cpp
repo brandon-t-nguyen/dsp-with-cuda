@@ -11,6 +11,9 @@ Signal Signal::convolve( const Signal & x, const Signal & h )
     const std::complex<float> * h_buffer = h.m_samples;
     std::complex<float> * y_buffer = new std::complex<float>[convLen];
 
+    // very mathematical way of doing it
+    // for each point x[n] and h[-n] are in contact,
+    // do the sum of products between overlapping x[n] and h[n]
     for(int n = 0; n < convLen; ++n)
     {
         std::complex<float> sum = 0;
