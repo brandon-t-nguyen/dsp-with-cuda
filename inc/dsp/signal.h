@@ -9,6 +9,10 @@ namespace dsp
     class Signal
     {
     public:
+        // Copy constructor
+        Signal( );
+        Signal( const Signal & other );
+
         // Real constructors
         Signal( int length, const float samples[] );
         Signal( const std::vector<float> & samples );
@@ -23,7 +27,7 @@ namespace dsp
          * relative to the global origin
          * @return  postion of the start of the signal
          */
-        int relative_position(void);
+        int relative_position(void) const;
 
         /**
          * Shifts the position of the signal relative
@@ -38,13 +42,17 @@ namespace dsp
          * Returns the length of this signal
          * @return  length of signal
          */
-        int length(void);
+        int length(void) const;
 
         /**
          * Accesses the signal by its sample index
          * @param[in]   index   Local sample index
          */
         std::complex<float> & operator[](int index);
+        const std::complex<float> & operator[](int index) const;
+
+
+        static Signal convolve( const Signal & x, const Signal & h );
 
     private:
         // I'm going to roll with single precision
