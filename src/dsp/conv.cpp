@@ -1,5 +1,6 @@
 #include <dsp/signal.h>
 
+#ifndef GPU_EN
 using namespace dsp;
 Signal Signal::convolve( const Signal & x, const Signal & h )
 {
@@ -36,3 +37,4 @@ Signal Signal::convolve( const Signal & x, const Signal & h )
     y.m_position = x.m_position - hLen + 1; // since x stays in place
     return y;
 }
+#endif

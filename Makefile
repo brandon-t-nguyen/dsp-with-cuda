@@ -6,8 +6,8 @@ EXECUTABLE_DIR = bin
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
 
-#GPU_EN = GPU_EN
-GPU_EN  = GPU_DIS
+GPU_EN = GPU_EN
+#GPU_EN  = GPU_DIS
 
 OBJDIR = obj
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -27,12 +27,12 @@ GTEST_SRC = $(GTEST_DIR)/*.cpp
 #.cpp.o:
 %.o:%.cpp
 	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $(OBJDIR)/$(@F)
+	$(CC) $(CFLAGS) $(INCLUDE) -D$(GPU_EN) -c $< -o $(OBJDIR)/$(@F)
 
 #.cu.o:
 %.o:%.cu
 	mkdir -p $(CUDA_OBJDIR)
-	nvcc -c $(INCLUDE) $< -o $(CUDA_OBJDIR)/$(@F)
+	nvcc -c $(INCLUDE) -D$(GPU_EN) $< -o $(CUDA_OBJDIR)/$(@F)
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
 	mkdir -p $(EXECUTABLE_DIR)
