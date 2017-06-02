@@ -63,8 +63,14 @@ int main(int argc, char * argv[])
 {
     std::cout << "Hello world!" << std::endl;
 
+    /*
     float x_raw[] = {1, 2, 3, 4, 5};
     float h_raw[] = {0, 1, 2, 3, 1};
+    Signal x(ARRAY_LEN(x_raw),x_raw);
+    Signal h(ARRAY_LEN(h_raw),h_raw);
+    */
+    std::complex<float> x_raw[] = {{1,2}, {2,-1}, {3,0}, {4,0}, {5,3}};
+    std::complex<float> h_raw[] = {{0,0}, {1,0}, {2,2}, {3,0}, {1,0}};
     Signal x(ARRAY_LEN(x_raw),x_raw);
     Signal h(ARRAY_LEN(h_raw),h_raw);
     Signal y = Signal::convolve(x,h);
