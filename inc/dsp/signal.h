@@ -19,7 +19,7 @@ namespace dsp
 
         // Complex constructors
         Signal( int length, const std::complex<float> samples[] );
-        Signal( const std::vector<std::complex<float>> & samples );
+        Signal( const std::vector< std::complex<float> > & samples );
         ~Signal();
 
         /**
