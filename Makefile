@@ -6,6 +6,9 @@ EXECUTABLE_DIR = bin
 EXECUTABLE = cufft_main
 INCLUDE = -Iinc -I/opt/cuda/include 
 
+#GPU_EN = GPU_EN
+GPU_EN  = GPU_DIS
+
 OBJDIR = obj
 OBJECTS = $(SOURCES:.cpp=.o)
 
@@ -37,14 +40,14 @@ $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
 	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
 else
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS)))
+	$(CC) $(CFLAGS) $(LIBS) -D$(GPU_EN) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS)))
 endif
 
 $(GTEST_EXEC): $(OBJECTS) $(CUDA_OBJECTS)
 ifeq ($(CUDA_OBJECTS), )
 	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
 else
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) $(GTEST_SRC)
+	$(CC) $(CFLAGS) $(LIBS) -D$(GPU_EN) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) $(GTEST_SRC)
 endif
 
 all: $(EXECUTABLE)
