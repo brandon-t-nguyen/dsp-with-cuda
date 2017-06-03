@@ -39,8 +39,8 @@ struct ConvExpResults
 std::ostream & operator<<(std::ostream & os, const ConvExpResults & res)
 {
     os << res.dataSize << ","
-       << res.cpuTime << "," << res.cpuSD << ","
-       << res.gpuTime << "," << res.gpuSD << ","
+       << res.cpuTime << "," << res.gpuTime << ","
+       << res.cpuSD   << "," << res.gpuSD   << ","
        << std::endl;
     return os;
 }
@@ -81,8 +81,8 @@ void generateSignalBuffer(int len, std::complex<float> * buffer)
 
 ConvExpResults performExperiment(int size)
 {
-    constexpr int REPETITIONS = 100;
-    constexpr int SCALING     = 1;  // scale for timing
+    constexpr int REPETITIONS = 200;
+    constexpr int SCALING     = 100;  // scale for timing
     static double trials[REPETITIONS];
 
     ConvExpResults results;
@@ -107,7 +107,7 @@ ConvExpResults performExperiment(int size)
         steady_clock::time_point end   =  steady_clock::now();
         duration<double> time = duration_cast<duration<double>>(end - start);
         // mark result
-        trials[i] = time.count()*1000000;
+        trials[i] = time.count()*1000000/SCALING;
     }
     calculateStats(REPETITIONS,trials,&(results.cpuTime),&(results.cpuSD));
 
@@ -127,7 +127,7 @@ ConvExpResults performExperiment(int size)
         steady_clock::time_point end   =  steady_clock::now();
         duration<double> time = duration_cast<duration<double>>(end - start);
         // mark result
-        trials[i] = time.count()*1000000;
+        trials[i] = time.count()*1000000/SCALING;
     }
     calculateStats(REPETITIONS,trials,&(results.gpuTime),&(results.gpuSD));
 
@@ -142,7 +142,12 @@ ConvExpResults performExperiment(int size)
 static int dataSizes[] = {5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
 
 // for threshold finding
-//static int dataSizes[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200 };
+/*
+static int dataSizes[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100,
+105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200,
+205, 210, 215, 220, 225, 230, 235, 240, 245, 250, 255, 260, 265, 270, 275, 280, 285, 290, 295, 300,
+};
+*/
 void experiment()
 {
     ConvExpResults results[ARRAY_LEN(dataSizes)];
