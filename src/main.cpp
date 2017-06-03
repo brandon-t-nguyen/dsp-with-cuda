@@ -122,7 +122,7 @@ int main(int argc, char * argv[])
 struct Experiment
 {
 
-}
+};
 
 void experiment()
 {
