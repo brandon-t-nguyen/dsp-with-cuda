@@ -70,7 +70,18 @@ Signal::Signal( const std::vector<std::complex<float>> & samples )
 
 Signal::~Signal()
 {
-    delete[] m_samples;
+    destroy();
+}
+
+void Signal::destroy()
+{
+    if(m_samples != nullptr)
+    {
+        delete[] m_samples;
+    }
+    m_samples  = nullptr;
+    m_length   = 0;
+    m_position = 0;
 }
 
 std::complex<float> & Signal::operator[](int index)

@@ -61,6 +61,8 @@ namespace dsp
         std::complex<float> * m_samples;
         int     m_length;
         int     m_position;
+
+        void destroy();
     };
     /**
      * Perform a convolution on the signal
