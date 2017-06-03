@@ -1,6 +1,7 @@
 CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
+CUFLAGS = -g
 SOURCES = $(wildcard src/dsp/*.cpp) $(wildcard src/*.cpp) 
 EXECUTABLE_DIR = bin
 EXECUTABLE = cufft_main
@@ -32,7 +33,7 @@ GTEST_SRC = $(GTEST_DIR)/*.cpp
 #.cu.o:
 %.o:%.cu
 	mkdir -p $(CUDA_OBJDIR)
-	nvcc -c $(INCLUDE) -D$(GPU_EN) $< -o $(CUDA_OBJDIR)/$(@F)
+	nvcc -c $(CUFLAGS) $(INCLUDE) -D$(GPU_EN) $< -o $(CUDA_OBJDIR)/$(@F)
 
 $(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
 	mkdir -p $(EXECUTABLE_DIR)
