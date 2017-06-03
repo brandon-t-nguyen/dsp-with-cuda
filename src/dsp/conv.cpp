@@ -6,7 +6,7 @@ Signal Signal::convolve( const Signal & x, const Signal & h )
     // decide to call cpu or gpu implementation
     // based on input size
     int n = x.length() + h.length();
-    if(n < 200)
+    if(n < 130)
     {
         return convolve_cpu(x,h);
     }
