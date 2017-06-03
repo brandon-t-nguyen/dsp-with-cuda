@@ -1,42 +1,11 @@
 #include <iostream>
-/*
-#include <vector>
-#include <operations.h>
-
-void printVector(const std::vector<double> & v, const char * name)
-{
-    std::cout << name << ": { ";
-    for(int i = 0; i < v.size()-1; ++i)
-    {
-        std::cout << v[i] << ", ";
-    }
-    std::cout << v.back() << " }" << std::endl;
-}
-
-int main(int argc, char * argv[])
-{
-    std::cout << "Hello world!" << std::endl;
-
-    double x_raw[] = {1, 2, 3, 4, 5};
-    double h_raw[] = {0, 1, 2, 3, 1};
-
-    std::vector<double> x (x_raw, x_raw + sizeof(x_raw)/sizeof(x_raw[0]));
-    std::vector<double> h (h_raw, h_raw + sizeof(h_raw)/sizeof(h_raw[0]));
-
-    std::vector<double> * py = Operations::convolve(&x, &h);
-
-    printVector(x,"x");
-    printVector(h,"h");
-    printVector(*py,"y");
-
-    return 0;
-}
-*/
 #include <chrono>
+#include <cstdlib>
+#include <ctime>
 #include <dsp/signal.h>
 #define ARRAY_LEN(x) (sizeof(x)/sizeof(x[0]))
 using namespace dsp;
-
+using namespace std::chrono;
 std::ostream & operator<<(std::ostream & os, const std::complex<float> & num)
 {
     #define EPSILON (1e-5)
@@ -48,6 +17,144 @@ std::ostream & operator<<(std::ostream & os, const std::complex<float> & num)
     return os;
 }
 
+void printConvExpResultsHeader()
+{
+    std::cout << "Input Size,"
+              << "CPU mean time (us),"
+              << "GPU mean time (us),"
+              << "CPU StdDev (us),"
+              << "GPU StdDev (us),"
+              << std::endl;
+}
+
+struct ConvExpResults
+{
+    int dataSize;
+    double cpuTime;
+    double cpuSD;
+    double gpuTime;
+    double gpuSD;
+};
+
+std::ostream & operator<<(std::ostream & os, const ConvExpResults & res)
+{
+    os << res.dataSize << ","
+       << res.cpuTime << "," << res.cpuSD << ","
+       << res.gpuTime << "," << res.gpuSD << ","
+       << std::endl;
+    return os;
+}
+
+// using sqrt(E[x^2] - E[x]^2)
+// to reduce number of subtracts
+void calculateStats(int len, const double results[], double * meanOut, double * sdOut)
+{
+    // calculate E[x] and E[x^2]
+    double eX  = 0.0;
+    double eX2 = 0.0;
+    for(int i = len-1; i >= 0; --i)
+    {
+        eX += results[i];
+        eX2 += (results[i]*results[i]);
+    }
+    eX /= len;
+    eX2 /= len;
+
+    double var = eX2 - eX*eX;
+    double sd  = sqrt(var);
+
+    *meanOut = eX;
+    *sdOut   = sd;
+}
+
+void generateSignalBuffer(int len, std::complex<float> * buffer)
+{
+    srand(static_cast<unsigned>(time(0)));
+    for(int i = 0; i < len; ++i)
+    {
+        float real, imag;
+        real = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        imag = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        buffer[i] = std::complex<float>(real,imag);
+    }
+}
+
+ConvExpResults performExperiment(int size)
+{
+    constexpr int REPETITIONS = 100;
+    constexpr int SCALING     = 1;  // scale for timing
+    static double trials[REPETITIONS];
+
+    ConvExpResults results;
+    results.dataSize = size*2;  // x and h are same size
+
+    std::complex<float> * x_raw = new std::complex<float>[size];
+    std::complex<float> * h_raw = new std::complex<float>[size];
+
+    // cpu
+    for(int i = 0; i < REPETITIONS; ++i)
+    {
+        generateSignalBuffer(size,x_raw);
+        generateSignalBuffer(size,h_raw);
+        Signal x(size,x_raw);
+        Signal h(size,h_raw);
+
+        steady_clock::time_point start =  steady_clock::now();
+        for(volatile int i = 0; i < SCALING; i++)
+        {
+            Signal temp = Signal::convolve_cpu(x,h);
+        }
+        steady_clock::time_point end   =  steady_clock::now();
+        duration<double> time = duration_cast<duration<double>>(end - start);
+        // mark result
+        trials[i] = time.count()*1000000;
+    }
+    calculateStats(REPETITIONS,trials,&(results.cpuTime),&(results.cpuSD));
+
+    // gpu
+    for(int i = 0; i < REPETITIONS; ++i)
+    {
+        generateSignalBuffer(size,x_raw);
+        generateSignalBuffer(size,h_raw);
+        Signal x(size,x_raw);
+        Signal h(size,h_raw);
+
+        steady_clock::time_point start =  steady_clock::now();
+        for(volatile int i = 0; i < SCALING; i++)
+        {
+            Signal temp = Signal::convolve_gpu(x,h);
+        }
+        steady_clock::time_point end   =  steady_clock::now();
+        duration<double> time = duration_cast<duration<double>>(end - start);
+        // mark result
+        trials[i] = time.count()*1000000;
+    }
+    calculateStats(REPETITIONS,trials,&(results.gpuTime),&(results.gpuSD));
+
+
+    delete[] x_raw;
+    delete[] h_raw;
+
+    return results;
+}
+
+// for scaling
+static int dataSizes[] = {5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+
+// for threshold finding
+//static int dataSizes[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 170, 175, 180, 185, 190, 195, 200 };
+void experiment()
+{
+    ConvExpResults results[ARRAY_LEN(dataSizes)];
+
+    printConvExpResultsHeader();
+    for(int i = 0; i < ARRAY_LEN(dataSizes); ++i)
+    {
+        results[i] = performExperiment(dataSizes[i]);
+        std::cout << results[i];
+    }
+}
+
 void printSignal(const Signal & signal, const char * name)
 {
     std::cout << name << ": { ";
@@ -57,74 +164,8 @@ void printSignal(const Signal & signal, const char * name)
     }
     int i = signal.length()-1;
     std::cout << signal[i] << " }" << std::endl;
-
 }
-#include <cstdlib>
-#include <ctime>
 int main(int argc, char * argv[])
 {
-    std::cout << "Hello world!" << std::endl;
-
-    /*
-    float x_raw[] = {1, 2, 3, 4, 5};
-    float h_raw[] = {0, 1, 2, 3, 1};
-    Signal x(ARRAY_LEN(x_raw),x_raw);
-    Signal h(ARRAY_LEN(h_raw),h_raw);
-    */
-    /*
-    std::complex<float> x_raw[] = {{1,2}, {2,-1}, {3,0}, {4,0}, {5,3}};
-    std::complex<float> h_raw[] = {{0,0}, {1,0}, {2,2}, {3,0}, {1,0}};
-    Signal x(ARRAY_LEN(x_raw),x_raw);
-    Signal h(ARRAY_LEN(h_raw),h_raw);
-    */
-
-    ///*
-    int len = 500;
-    srand(static_cast<unsigned>(time(0)));
-    std::complex<float> * x_raw = new std::complex<float>[len];
-    std::complex<float> * h_raw = new std::complex<float>[len];
-    for(int i = 0; i < len; ++i)
-    {
-        float real, imag;
-        real = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
-        imag = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
-        x_raw[i] = std::complex<float>(real,imag);
-        real = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
-        imag = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
-        h_raw[i] = std::complex<float>(real,imag);
-    }
-    Signal x(len,x_raw);
-    Signal h(len,h_raw);
-    //*/
-
-    int repeats = 1000;
-    ///*
-    using namespace std::chrono;
-    steady_clock::time_point start =  steady_clock::now();
-    for(volatile int i = 0; i < repeats; i++)
-    {
-        Signal temp = Signal::convolve(x,h);
-    }
-    steady_clock::time_point end   =  steady_clock::now();
-    duration<double> time = duration_cast<duration<double>>(end - start);
-    std::cout << "It took " << time.count() << " seconds to execute " << repeats << std::endl;
-    //*/
-    Signal y = Signal::convolve(x,h);
-    printSignal(x,"x");
-    printSignal(h,"h");
-    printSignal(y,"y");
-    std::cout << "It took " << time.count() << " seconds to execute " << repeats << std::endl;
-    delete[] x_raw;
-    delete[] h_raw;
-    return 0;
-}
-
-struct Experiment
-{
-
+    experiment();
 };
-
-void experiment()
-{
-
-}
