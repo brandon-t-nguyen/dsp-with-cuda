@@ -1,8 +1,29 @@
 #include <dsp/signal.h>
 
-#ifndef GPU_EN
 using namespace dsp;
 Signal Signal::convolve( const Signal & x, const Signal & h )
+{
+    // decide to call cpu or gpu implementation
+    // based on input size
+    int n = x.length() + h.length();
+    if(n < 200)
+    {
+        return convolve_cpu(x,h);
+    }
+    else
+    {
+        return convolve_gpu(x,h);
+    }
+}
+
+#ifndef GPU_EN
+Signal Signal::convolve_gpu( const Signal & x, const Signal & h )
+{
+    return convolve_cpu(x,h);
+}
+#endif
+
+Signal Signal::convolve_cpu( const Signal & x, const Signal & h )
 {
     int xLen    = x.m_length;
     int hLen    = h.m_length;
@@ -37,4 +58,3 @@ Signal Signal::convolve( const Signal & x, const Signal & h )
     y.m_position = x.m_position - hLen + 1; // since x stays in place
     return y;
 }
-#endif

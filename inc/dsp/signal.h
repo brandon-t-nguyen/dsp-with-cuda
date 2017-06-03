@@ -53,6 +53,8 @@ namespace dsp
 
 
         static Signal convolve( const Signal & x, const Signal & h );
+        static Signal convolve_cpu( const Signal & x, const Signal & h );
+        static Signal convolve_gpu( const Signal & x, const Signal & h );
 
     private:
         // I'm going to roll with single precision

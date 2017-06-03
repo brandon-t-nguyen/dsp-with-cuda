@@ -65,7 +65,7 @@ void cuFloatComplex2complex( int len, const cuFloatComplex cu[], std::complex<fl
 }
 
 using namespace dsp;
-Signal Signal::convolve( const Signal & x, const Signal & h )
+Signal Signal::convolve_gpu( const Signal & x, const Signal & h )
 {
     int xLen    = x.m_length;
     int hLen    = h.m_length;
