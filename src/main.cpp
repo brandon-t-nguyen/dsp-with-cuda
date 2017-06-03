@@ -32,6 +32,7 @@ int main(int argc, char * argv[])
     return 0;
 }
 */
+#include <chrono>
 #include <dsp/signal.h>
 #define ARRAY_LEN(x) (sizeof(x)/sizeof(x[0]))
 using namespace dsp;
@@ -58,7 +59,8 @@ void printSignal(const Signal & signal, const char * name)
     std::cout << signal[i] << " }" << std::endl;
 
 }
-
+#include <cstdlib>
+#include <ctime>
 int main(int argc, char * argv[])
 {
     std::cout << "Hello world!" << std::endl;
@@ -69,15 +71,60 @@ int main(int argc, char * argv[])
     Signal x(ARRAY_LEN(x_raw),x_raw);
     Signal h(ARRAY_LEN(h_raw),h_raw);
     */
+    /*
     std::complex<float> x_raw[] = {{1,2}, {2,-1}, {3,0}, {4,0}, {5,3}};
     std::complex<float> h_raw[] = {{0,0}, {1,0}, {2,2}, {3,0}, {1,0}};
     Signal x(ARRAY_LEN(x_raw),x_raw);
     Signal h(ARRAY_LEN(h_raw),h_raw);
-    Signal y = Signal::convolve(x,h);
+    */
 
+    ///*
+    int len = 500;
+    srand(static_cast<unsigned>(time(0)));
+    std::complex<float> * x_raw = new std::complex<float>[len];
+    std::complex<float> * h_raw = new std::complex<float>[len];
+    for(int i = 0; i < len; ++i)
+    {
+        float real, imag;
+        real = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        imag = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        x_raw[i] = std::complex<float>(real,imag);
+        real = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        imag = (static_cast<float>(rand())/static_cast<float>(RAND_MAX)) * 10 - 20;
+        h_raw[i] = std::complex<float>(real,imag);
+    }
+    Signal x(len,x_raw);
+    Signal h(len,h_raw);
+    //*/
+
+    int repeats = 1000;
+    ///*
+    using namespace std::chrono;
+    steady_clock::time_point start =  steady_clock::now();
+    for(volatile int i = 0; i < repeats; i++)
+    {
+        Signal temp = Signal::convolve(x,h);
+    }
+    steady_clock::time_point end   =  steady_clock::now();
+    duration<double> time = duration_cast<duration<double>>(end - start);
+    std::cout << "It took " << time.count() << " seconds to execute " << repeats << std::endl;
+    //*/
+    Signal y = Signal::convolve(x,h);
     printSignal(x,"x");
     printSignal(h,"h");
     printSignal(y,"y");
-
+    std::cout << "It took " << time.count() << " seconds to execute " << repeats << std::endl;
+    delete[] x_raw;
+    delete[] h_raw;
     return 0;
+}
+
+struct Experiment
+{
+
+}
+
+void experiment()
+{
+
 }
