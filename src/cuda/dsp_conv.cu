@@ -30,18 +30,19 @@ void mac_slide( const cuFloatComplex * x, const cuFloatComplex * h, cuFloatCompl
 {
     // TODO: have calculations for offset. Thus we're limited to
     //       1024*1024 threads for the time being
-    int n = blockIdx.x * blockDim.x + threadIdx.x; // TODO: fix the calculation
-    if( n < yLen )
+    int n = blockIdx.x * blockDim.x + threadIdx.x;  // index into y[n]
+    if( n < yLen )  // n has to be within bounds of y[n]
     {
         int xI = n - hI;
-        cuFloatComplex sum  = y[n];  // pick up the last sum
         cuFloatComplex xVal = make_cuFloatComplex(0.0f,0.0f);
-        if( 0 <= xI && xI < xLen )
+        if( 0 <= xI && xI < xLen )  // if out of bounds, x[n'] = 0
         {
             xVal = x[xI];
         }
         cuFloatComplex hVal = h[hI]; // TODO: optimization: provide hVal from host
                                      //       don't need to memcpy h[n]
+        
+        cuFloatComplex sum     = y[n];                  // pick up the last sum
         cuFloatComplex product = cuCmulf(xVal, hVal);   // multiply
         y[n] = cuCaddf(sum, product);                   // accumulate
     }
@@ -92,7 +93,7 @@ Signal Signal::convolve( const Signal & x, const Signal & h )
 
     cudaMemcpy(d_x, h_x, sizeof(cuFloatComplex)*xLen, cudaMemcpyHostToDevice);
     cudaMemcpy(d_h, h_h, sizeof(cuFloatComplex)*hLen, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_y, h_y, sizeof(cuFloatComplex)*hLen, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_y, h_y, sizeof(cuFloatComplex)*yLen, cudaMemcpyHostToDevice);
     
     // launch our things in parallel,
     // then lockstep the MAC
