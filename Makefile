@@ -2,71 +2,74 @@ CC = g++
 LD = ld
 CFLAGS =-Wall -Wextra -g
 CUFLAGS = -g
-SOURCES = $(wildcard src/dsp/*.cpp) $(wildcard src/*.cpp) 
-EXECUTABLE_DIR = bin
-EXECUTABLE = cufft_main
-INCLUDE = -Iinc -I/opt/cuda/include 
+SRCDIR = src
+SOURCES = $(wildcard $(SRCDIR)/dsp/*.cpp) $(wildcard $(SRCDIR)/*.cpp) 
+BIN_DIR = bin
+BIN = dsp_main
+INCLUDE = -Iinc
+LIBS = 
 
-GPU_EN = GPU_EN
-#GPU_EN  = GPU_DIS
+CUDA_EN = 1
+CUDA_LIBPATH = /opt/cuda/lib64
+CUDA_INCPATH = /opt/cuda/include
+ifeq ($(CUDA_EN),1)
+GPU_DEF 		= -DGPU_EN
+CUDA_SOURCES 	= $(wildcard $(SRCDIR)/cuda/*.cu)
+CUDA_OBJDIR 	= $(OBJDIR)/cuda
+#CUDA_OBJECTS 	= $(CUDA_SOURCES:.cu=.o)
+CUDA_OBJECTS 	= $(CUDA_SOURCES:$(SRCDIR)/cuda/%.cu=$(CUDA_OBJDIR)/%.o)
+LIBS 			+= -L$(CUDA_LIBPATH) -lcudart -lcuda 
+INCLUDE 		+= -I$(CUDA_INCPATH)
+else
+GPU_DEF 		= 
+CUDA_SOURCES 	=
+CUDA_OBJDIR 	=
+CUDA_OBJECTS 	=
+CUDA_BLOB 		=
+endif
 
 OBJDIR = obj
-OBJECTS = $(SOURCES:.cpp=.o)
-
-CUDA_SOURCES = $(wildcard src/cuda/*.cu)
-CUDA_OBJDIR = $(OBJDIR)/cuda
-CUDA_OBJECTS = $(CUDA_SOURCES:.cu=.o)
-CUDA_BLOB = cuda.o
-
-LIBS = -L/opt/cuda/lib64/ -lcudart -lcuda 
-
+OBJECTS = $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 GTEST_DIR = tests
-GTEST_EXEC = cufft_gtest
+GTEST_BIN = cufft_gtest
 GTEST_SRC = $(GTEST_DIR)/*.cpp
 
-#.cpp.o:
-%.o:%.cpp
-	mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) $(INCLUDE) -D$(GPU_EN) -c $< -o $(OBJDIR)/$(@F)
+$(OBJDIR)/%.o:$(SRCDIR)/%.cpp
+	mkdir -p $(@D)	# generate the directory
+	$(CC) $(CFLAGS) $(INCLUDE) $(GPU_DEF) -c $< -o $(@)
 
-#.cu.o:
-%.o:%.cu
-	mkdir -p $(CUDA_OBJDIR)
-	nvcc -c $(CUFLAGS) $(INCLUDE) -D$(GPU_EN) $< -o $(CUDA_OBJDIR)/$(@F)
+$(OBJDIR)/cuda/%.o:$(SRCDIR)/cuda/%.cu
+	mkdir -p $(@D)	# generate the directory
+	nvcc -c $(CUFLAGS) $(INCLUDE) $(GPU_DEF) $< -o $(@)
 
-$(EXECUTABLE): $(OBJECTS) $(CUDA_OBJECTS)
-	mkdir -p $(EXECUTABLE_DIR)
+$(BIN_DIR)/$(BIN): $(OBJECTS) $(CUDA_OBJECTS)
+	mkdir -p $(BIN_DIR)
 	echo $(CUDA_OBJECTS)
-ifeq ($(CUDA_OBJECTS), )
-	$(CC) $(CFLAGS) $(LIBS) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))
-else
-	$(CC) $(CFLAGS) $(LIBS) -D$(GPU_EN) -o $(EXECUTABLE_DIR)/$(EXECUTABLE) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS)))
-endif
-
-$(GTEST_EXEC): $(OBJECTS) $(CUDA_OBJECTS)
-ifeq ($(CUDA_OBJECTS), )
-	$(CC) $(CFLAGS) $(LIBS) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS)))$(GTEST_SRC)
-else
-	$(CC) $(CFLAGS) $(LIBS) -D$(GPU_EN) -lgtest -o $(GTEST_DIR)/$(GTEST_EXEC) $(addprefix $(OBJDIR)/,$(notdir $(OBJECTS))) $(addprefix $(CUDA_OBJDIR)/,$(notdir $(CUDA_OBJECTS))) $(GTEST_SRC)
-endif
-
-all: $(EXECUTABLE)
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) $(GPU_DEF) -o $(BIN_DIR)/$(BIN) $(OBJECTS) $(CUDA_OBJECTS)
 	@echo "Program built"
 
-gtest: $(GTEST_EXEC)
-	@echo "gtest built"
-	./$(GTEST_EXEC)
+$(BIN_DIR)/$(GTEST_BIN): $(OBJECTS) $(CUDA_OBJECTS)
+	mkdir -p $(BIN_DIR)
+	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) $(GPU_DEF) -lgtest -o $(BIN_DIR)/$(GTEST_BIN) $(OBJECTS) $(CUDA_OBJECTS) $(GTEST_SRC)
+	@echo "gtest suite built"
+
+all: $(BIN_DIR)/$(BIN)
+
+gtest: $(BIN_DIR)/$(GTEST_BIN)
+	./$(GTEST_BIN)
 
 clean:
 	rm -r $(OBJDIR)
-	rm -r $(EXECUTABLE_DIR)
+	rm -r $(BIN_DIR)
 
-test: $(EXECUTABLE)
-	$(EXECUTABLE_DIR)/$(EXECUTABLE)
+test: $(BIN_DIR)/$(BIN)
+	$(BIN_DIR)/$(BIN)
 
-mem: $(EXECUTABLE)
-	valgrind --leak-check=yes $(EXECUTABLE_DIR)/$(EXECUTABLE)
+mem: $(BIN_DIR)/$(BIN)
+	valgrind --leak-check=yes $(BIN_DIR)/$(BIN)
 
-debug: $(EXECUTABLE)
-	gdb $(EXECUTABLE_DIR)/$(EXECUTABLE)
+debug: $(BIN_DIR)/$(BIN)
+	gdb $(BIN_DIR)/$(BIN)
+
+.PHONY: all clean test gtest mem debug
