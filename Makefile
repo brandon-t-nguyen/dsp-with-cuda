@@ -1,6 +1,6 @@
 CC = g++
 LD = ld
-CFLAGS =-Wall -Wextra -g
+CFLAGS =-Wall -Wextra -g -std=c++11
 CUFLAGS = -g
 SRCDIR = src
 SOURCES = $(wildcard $(SRCDIR)/dsp/*.cpp) $(wildcard $(SRCDIR)/*.cpp) 
@@ -10,8 +10,10 @@ INCLUDE = -Iinc
 LIBS = 
 
 CUDA_EN = 1
-CUDA_LIBPATH = /opt/cuda/lib64
-CUDA_INCPATH = /opt/cuda/include
+#CUDA_PATH = /opt/cuda
+CUDA_PATH = /usr/local/cuda
+CUDA_LIBPATH = $(CUDA_PATH)/lib64
+CUDA_INCPATH = $(CUDA_PATH)/include
 ifeq ($(CUDA_EN),1)
 GPU_DEF 		= -DGPU_EN
 CUDA_SOURCES 	= $(wildcard $(SRCDIR)/cuda/*.cu)
@@ -46,12 +48,12 @@ $(OBJDIR)/cuda/%.o:$(SRCDIR)/cuda/%.cu
 $(BIN_DIR)/$(BIN): $(OBJECTS) $(CUDA_OBJECTS)
 	mkdir -p $(BIN_DIR)
 	echo $(CUDA_OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) $(GPU_DEF) -o $(BIN_DIR)/$(BIN) $(OBJECTS) $(CUDA_OBJECTS)
+	$(CC) $(CFLAGS) $(INCLUDE) $(GPU_DEF) -o $(BIN_DIR)/$(BIN) $(OBJECTS) $(CUDA_OBJECTS) $(LIBS)
 	@echo "Program built"
 
 $(BIN_DIR)/$(GTEST_BIN): $(OBJECTS) $(CUDA_OBJECTS)
 	mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) $(INCLUDE) $(LIBS) $(GPU_DEF) -lgtest -o $(BIN_DIR)/$(GTEST_BIN) $(OBJECTS) $(CUDA_OBJECTS) $(GTEST_SRC)
+	$(CC) $(CFLAGS) $(INCLUDE) $(GPU_DEF) -lgtest -o $(BIN_DIR)/$(GTEST_BIN) $(OBJECTS) $(CUDA_OBJECTS) $(GTEST_SRC) $(LIBS) 
 	@echo "gtest suite built"
 
 all: $(BIN_DIR)/$(BIN)
