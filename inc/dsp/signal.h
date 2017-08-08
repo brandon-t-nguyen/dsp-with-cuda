@@ -25,8 +25,9 @@ namespace dsp
         /**
          * Extends this signal to desired length
          * @param[in]   length  The desired length
+         * @return      Another an extended signal
          */
-        void extend( int length );
+        Signal extend( int length );
 
         /**
          * Returns the position of the 0th element

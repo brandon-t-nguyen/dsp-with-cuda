@@ -94,10 +94,13 @@ const std::complex<float> & Signal::operator[](int index) const
     return m_samples[index];
 }
 
-void Signal::extend( int length )
+Signal Signal::extend( int length )
 {
     if (length <= m_length)
-        return;
+    {
+        Signal copy = Signal(*this);
+        return copy;
+    }
 
     // copy original
     std::complex<float> * samples_buffer = new std::complex<float>[length];
@@ -113,9 +116,12 @@ void Signal::extend( int length )
         samples_buffer[i] == std::complex<float>(0.0f, 0.0f);
     }
 
-    delete[] m_samples;
-    m_samples = samples_buffer;
-    m_length = length;
+    Signal copy;
+    copy.m_samples = samples_buffer;
+    copy.m_length = length;
+    copy.m_position = m_position;
+
+    return copy;
 }
 
 int Signal::length(void) const
