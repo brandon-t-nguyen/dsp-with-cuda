@@ -3,15 +3,15 @@ LD = ld
 CFLAGS =-Wall -Wextra -g -std=c++11
 CUFLAGS = -g
 SRCDIR = src
-SOURCES = $(wildcard $(SRCDIR)/dsp/*.cpp) $(wildcard $(SRCDIR)/*.cpp) 
+SOURCES = $(wildcard $(SRCDIR)/dsp/*.cpp) $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/util/*.c)
 BIN_DIR = bin
 BIN = dsp_main
 INCLUDE = -Iinc
 LIBS = 
 
 CUDA_EN = 1
-#CUDA_PATH = /opt/cuda
-CUDA_PATH = /usr/local/cuda
+CUDA_PATH = /opt/cuda
+#CUDA_PATH = /usr/local/cuda
 CUDA_LIBPATH = $(CUDA_PATH)/lib64
 CUDA_INCPATH = $(CUDA_PATH)/include
 ifeq ($(CUDA_EN),1)
@@ -34,10 +34,14 @@ OBJDIR = obj
 OBJECTS = $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 GTEST_DIR = tests
-GTEST_BIN = cufft_gtest
+GTEST_BIN = dsp_gtest
 GTEST_SRC = $(GTEST_DIR)/*.cpp
 
 $(OBJDIR)/%.o:$(SRCDIR)/%.cpp
+	mkdir -p $(@D)	# generate the directory
+	$(CC) $(CFLAGS) $(INCLUDE) $(GPU_DEF) -c $< -o $(@)
+
+$(OBJDIR)/%.o:$(SRCDIR)/%.c
 	mkdir -p $(@D)	# generate the directory
 	$(CC) $(CFLAGS) $(INCLUDE) $(GPU_DEF) -c $< -o $(@)
 
