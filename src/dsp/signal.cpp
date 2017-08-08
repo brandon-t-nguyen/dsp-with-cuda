@@ -94,6 +94,30 @@ const std::complex<float> & Signal::operator[](int index) const
     return m_samples[index];
 }
 
+void Signal::extend( int length )
+{
+    if (length <= m_length)
+        return;
+
+    // copy original
+    std::complex<float> * samples_buffer = new std::complex<float>[length];
+    int i;
+    for (i = 0; i < m_length; ++i)
+    {
+        samples_buffer[i] = m_samples[i];
+    }
+
+    // put zeros in
+    for (; i < length; ++i)
+    {
+        samples_buffer[i] == std::complex<float>(0.0f, 0.0f);
+    }
+
+    delete[] m_samples;
+    m_samples = samples_buffer;
+    m_length = length;
+}
+
 int Signal::length(void) const
 {
     return m_length;

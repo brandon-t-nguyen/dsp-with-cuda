@@ -23,6 +23,12 @@ namespace dsp
         ~Signal();
 
         /**
+         * Extends this signal to desired length
+         * @param[in]   length  The desired length
+         */
+        void extend( int length );
+
+        /**
          * Returns the position of the 0th element
          * relative to the global origin
          * @return  postion of the start of the signal
@@ -55,6 +61,10 @@ namespace dsp
         static Signal convolve( const Signal & x, const Signal & h );
         static Signal convolve_cpu( const Signal & x, const Signal & h );
         static Signal convolve_gpu( const Signal & x, const Signal & h );
+
+        static Signal fft( const Signal & x );
+        static Signal fft_cpu( const Signal & x );
+        static Signal fft_gpu( const Signal & x );
 
     private:
         // I'm going to roll with single precision
