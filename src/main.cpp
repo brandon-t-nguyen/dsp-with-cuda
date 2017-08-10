@@ -173,10 +173,14 @@ void printSignal(const Signal & signal, const char * name)
 int main(int argc, char * argv[])
 {
     //experiment();
-    float x_buf[8] = {0,1,2,3,4,5,6,7};
-    Signal x = Signal(8,x_buf);
+    //float x_buf[8] = {0,1,2,3,4,5,6,7};
+    float x_buf[8] = {0,1,0,1,0,1,0,1};
+    //float x_buf[5] = {0,1,2,3,4};
+    Signal x = Signal(sizeof(x_buf)/sizeof(x_buf[0]),x_buf);
     printSignal(x, "x");
-    printSignal(Signal::fft_cpu(x), "fft(x)");
+    Signal X = Signal::fft_cpu(x);
+    printSignal(X, "fft(x)");
+    printSignal(Signal::ifft_cpu(X), "ifft(fft(x))");
 
     return 0;
 };

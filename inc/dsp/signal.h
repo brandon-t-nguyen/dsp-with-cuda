@@ -70,6 +70,10 @@ namespace dsp
         static Signal fft_cpu( const Signal & x );
         static Signal fft_gpu( const Signal & x );
 
+        static Signal ifft( const Signal & x );
+        static Signal ifft_cpu( const Signal & x );
+        static Signal ifft_gpu( const Signal & x );
+
     private:
         // I'm going to roll with single precision
         // Apparently there's more hoops to jump through

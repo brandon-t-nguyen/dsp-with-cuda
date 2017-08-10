@@ -19,10 +19,28 @@ Signal Signal::fft( const Signal & x )
     }
 }
 
+Signal Signal::ifft( const Signal & x )
+{
+    // decide to call cpu or gpu implementation
+    // based on input size
+    if(x.length() < 130)
+    {
+        return ifft_cpu(x);
+    }
+    else
+    {
+        return ifft_gpu(x);
+    }
+}
+
 #ifndef GPU_EN
 Signal Signal::fft_gpu( const Signal & x )
 {
     return fft_cpu(x);
+}
+Signal Signal::ifft_gpu( const Signal & x )
+{
+    return ifft_cpu(x);
 }
 #endif
 
@@ -73,7 +91,7 @@ void printBuffer( int length, std::complex<float> * buffer )
     }
 }
 
-static Signal fft_rad2_dit( const Signal & x )
+static Signal fft_rad2_dit( const Signal & x, bool inv )
 {
     // normalize x to a certain length
     // determine if x's length is a power of 2
@@ -94,10 +112,21 @@ static Signal fft_rad2_dit( const Signal & x )
 
     // calculate twiddle factors
     std::complex<float> * twiddle = new std::complex<float>[length];
-    for (int i = 0; i < length; ++i)
+    if (!inv)
     {
-        twiddle[i] = std::exp(std::complex<float>(0.0f,-2*M_PI*i/length));
-        dprintf("W %d/%d: %f + %fi\n", i, length, twiddle[i].real(), twiddle[i].imag());
+        for (int i = 0; i < length; ++i)
+        {
+            twiddle[i] = std::exp(std::complex<float>(0.0f,-2*M_PI*i/length));
+            dprintf("W %d/%d: %f + %fi\n", i, length, twiddle[i].real(), twiddle[i].imag());
+        }
+    }
+    else
+    {
+        for (int i = 0; i < length; ++i)
+        {
+            twiddle[i] = std::exp(std::complex<float>(0.0f,2*M_PI*i/length));
+            dprintf("W -%d/%d: %f + %fi\n", i, length, twiddle[i].real(), twiddle[i].imag());
+        }
     }
 
     // two buffers; a source to work with, and one to write to
@@ -140,6 +169,16 @@ static Signal fft_rad2_dit( const Signal & x )
     printBuffer( length, buffer[SRC(curr)] );
     dprintf("====\n\n");
 
+    // if inverse, divide by N
+    if (inv)
+    {
+        std::complex<float> * buff = buffer[SRC(curr)];
+        for  (int i = length - 1; i >= 0; --i)
+        {
+            buff[i] = buff[i] / ((float)length);
+        }
+    }
+
     Signal X = Signal(length,buffer[SRC(curr)]);
     delete[] buffer[0];
     delete[] buffer[1];
@@ -151,6 +190,12 @@ static Signal fft_rad2_dit( const Signal & x )
 
 Signal Signal::fft_cpu( const Signal & x )
 {
-    Signal X = fft_rad2_dit( x );
+    Signal X = fft_rad2_dit( x, false );
+    return X;
+}
+
+Signal Signal::ifft_cpu( const Signal & x )
+{
+    Signal X = fft_rad2_dit( x, true );
     return X;
 }
