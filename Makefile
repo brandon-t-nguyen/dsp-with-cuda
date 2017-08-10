@@ -1,6 +1,7 @@
+#CC = /opt/cuda/bin/g++
 CC = g++
 LD = ld
-CFLAGS =-Wall -Wextra -g -std=c++11
+CFLAGS =-Wall -Wextra -g -std=c++11 -DDEBUG
 CUFLAGS = -g
 SRCDIR = src
 SOURCES = $(wildcard $(SRCDIR)/dsp/*.cpp) $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/util/*.c)
