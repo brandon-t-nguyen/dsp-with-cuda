@@ -24,6 +24,20 @@ Signal::Signal( const Signal & other )
     }
 }
 
+Signal::Signal( int length )
+{
+    std::complex<float> * sample_buffer = new std::complex<float>[length];
+    m_samples   = sample_buffer;
+    m_length    = length;
+    m_position  = 0;
+
+    // zeroed signal
+    for (int i = length-1; i >= 0; --i)
+    {
+        sample_buffer[i] = std::complex<float>(0.0f,0.0f);
+    }
+}
+
 Signal::Signal( int length, const float samples[] )
 {
     std::complex<float> * sample_buffer = new std::complex<float>[length];

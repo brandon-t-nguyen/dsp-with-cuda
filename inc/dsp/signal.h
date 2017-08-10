@@ -13,6 +13,9 @@ namespace dsp
         Signal( );
         Signal( const Signal & other );
 
+        // Empty signal constructor
+        Signal( int length );
+
         // Real constructors
         Signal( int length, const float samples[] );
         Signal( const std::vector<float> & samples );
