@@ -81,8 +81,8 @@ void generateSignalBuffer(int len, std::complex<float> * buffer)
 
 ConvExpResults performExperiment(int size)
 {
-    constexpr int REPETITIONS = 200;
-    constexpr int SCALING     = 100;  // scale for timing
+    constexpr int REPETITIONS = 30;
+    constexpr int SCALING     = 20;  // scale for timing
     static double trials[REPETITIONS];
 
     ConvExpResults results;
@@ -172,5 +172,11 @@ void printSignal(const Signal & signal, const char * name)
 }
 int main(int argc, char * argv[])
 {
-    experiment();
+    //experiment();
+    float x_buf[8] = {0,1,2,3,4,5,6,7};
+    Signal x = Signal(8,x_buf);
+    printSignal(x, "x");
+    printSignal(Signal::fft_cpu(x), "fft(x)");
+
+    return 0;
 };
