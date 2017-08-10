@@ -12,7 +12,7 @@ extern "C" {
 
 // toggleable compile time debug printing
 #ifdef DEBUG
-#define dprintf(...) fprintf(stdout,"DEBUG>> " __VA_ARGS__)
+#define dprintf(...) fprintf(stderr,"DEBUG>> " __VA_ARGS__)
 #else
 #define dprintf(...)
 #endif
